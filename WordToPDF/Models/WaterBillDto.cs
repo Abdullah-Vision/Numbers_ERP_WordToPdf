@@ -1,0 +1,39 @@
+﻿public class WaterBillDto
+{
+    public int EmpId { get; set; }
+    public string LetterDate { get; set; }   
+    public string EmpNo { get; set; }
+    public string EmpName { get; set; }
+    public string MartialStatus { get; set; }
+    public string LatterP { get; set; }
+    public string C_Sign { get; set; }
+    public string MarriageStatus { get; set; }
+    public string Sex { get; set; }
+    public string BloodGroup { get; set; }
+    public string Qualification { get; set; }
+    public DateTime? Dob { get; set; }
+    public string NW_Pay { get; set; }              
+    public string C_CurrentPay { get; set; }         
+    public string GuardianRelation { get; set; }
+    public string EmpFatherName { get; set; }
+    public decimal? CurrentPay { get; set; }
+    public string PermaAddress { get; set; }
+    public string ReportsTo { get; set; }
+    public string Cnic { get; set; }
+    public string Shift { get; set; }
+    public string DobFormatted { get; set; }        
+    public string Division { get; set; }
+    public string Department { get; set; }
+    public string Section { get; set; }
+    public string Designation { get; set; }
+    public string Grade { get; set; }
+    public string Doj { get; set; }                  
+    public string DisplayFromDate { get; set; }      
+    public string DisplayToDate { get; set; }        
+    public DateTime? ConfirmDate { get; set; }
+    public string LocationName { get; set; }
+    public string CompanyName { get; set; }
+    public byte[] C_Logo { get; set; }               
+    public string C_Address_Urdu { get; set; }
+    public string C_Address { get; set; }
+}
