@@ -35,7 +35,7 @@ namespace WordToPDF.Services
                 await connection.OpenAsync();
 
                 using var cmd = connection.CreateCommand();
-                cmd.CommandText = "IHSAN_COTTON.GET_PAYROLL_DETAILS";
+                cmd.CommandText = "COMPLIANCE_TEST.GET_PAYROLL_DETAILS";
                 cmd.CommandType = CommandType.StoredProcedure;
 
                 cmd.Parameters.Add(new OracleParameter("P_PERIOD_ID", OracleDbType.Varchar2, periodId, ParameterDirection.Input));
@@ -63,6 +63,7 @@ namespace WordToPDF.Services
                         EmpId = SafeGetInt32(reader, "EMP_ID"),
                         EmpNo = SafeGetString(reader, "EMP_NO"),
                         CardId = SafeGetString(reader, "CARD_ID"),
+                        CURR_DATE = SafeGetString(reader, "CURR_DATE"),
                         EmpName = SafeGetString(reader, "EMP_NAME"),
                         CurrentPay = SafeGetDecimal(reader, "CURRENT_PAY"),
                         EmpFatherName = SafeGetString(reader, "EMP_FATHER_NAME"),
@@ -76,6 +77,13 @@ namespace WordToPDF.Services
                         Nic = SafeGetString(reader, "NIC"),
                         Ntn = SafeGetString(reader, "NTN"),
                         OtAmount = SafeGetDecimal(reader, "OT_AMOUNT"),
+                        G_PAY = SafeGetDecimal(reader, "G_PAY"),
+                        EAR_PAY = SafeGetDecimal(reader, "EAR_PAY"),
+                        WORK_DAYS = SafeGetDecimal(reader, "WORK_DAYS"),
+                        LOAN = SafeGetDecimal(reader, "LOAN"),
+                        OT_HRS = SafeGetDecimal(reader, "OT_HRS"),
+                        BIKE_LOAN = SafeGetDecimal(reader, "BIKE_LOAN"),
+                        TOTAL_DED = SafeGetDecimal(reader, "TOTAL_DED"),
                         Incentive = SafeGetDecimal(reader, "INCENTIVE"),
                         EarnedPay = SafeGetDecimal(reader, "EARNED_PAY"),
                         DeductionAmount = SafeGetDecimal(reader, "DEDUCTION_AMOUNT"),
@@ -131,12 +139,19 @@ namespace WordToPDF.Services
                     { "{DOJ}", firstRecord.Doj ?? string.Empty },
                     { "{NIC}", firstRecord.Nic ?? string.Empty },
                     { "{NTN}", firstRecord.Ntn ?? string.Empty },
-                    { "{Current_date}", DateTime.Now.ToString("dd-MMM-yyyy") },
+                    { "{Curr_date}", firstRecord.CURR_DATE ?? string.Empty },
                     { "{PRESENTS}", firstRecord.Presents.ToString() },
                     { "{WORKING_DAYS}", firstRecord.WorkingDays.ToString() },
                     { "{RATE_PER_DA}", firstRecord.RatePerDay.ToString("N2") },
                     { "{INCENTIVE}", firstRecord.Incentive.ToString("N2") },
+                    { "{G_PAY}", firstRecord.G_PAY.ToString("N2") },
+                    { "{LOAN}", firstRecord.LOAN.ToString("N2") },
+                    { "{BIKE_LOAN}", firstRecord.BIKE_LOAN.ToString("N2") },
+                    { "{TOTAL_DED}", firstRecord.TOTAL_DED.ToString("N2") },
+                    { "{EAR_PAY}", firstRecord.EAR_PAY.ToString("N2") },
+                    { "{WORK_DAYS}", firstRecord.WORK_DAYS.ToString("N2") },
                     { "{OT_AMOUNT}", firstRecord.OtAmount.ToString("N2") },
+                    { "{OT_HRS}", firstRecord.OT_HRS.ToString("N2") },
                     { "{NET_SALARY}", firstRecord.NetSalary.ToString("N2") },
                     { "{NET_PAYABLE}", firstRecord.NetPayable.ToString("N2") },
                     { "{AMT_IN_WORDS}", firstRecord.AmtInWords ?? string.Empty }
@@ -156,62 +171,51 @@ namespace WordToPDF.Services
 
         private void InsertDynamicRowsInTable(Body body, List<PayrollDetailDto> allData)
         {
-            var table = body.Descendants<Table>().FirstOrDefault();
-            if (table == null) return;
-
-            // Find the row containing placeholders
-            TableRow templateRow = null;
-            foreach (var row in table.Elements<TableRow>())
-            {
-                var text = row.InnerText;
-                if (text.Contains("{INC_NAME}") || text.Contains("{ADED_NAME}"))
-                {
-                    templateRow = row;
-                    break;
-                }
-            }
-
-            if (templateRow == null) return;
-
-            // Get incomes and deductions
             var incomes = allData.Where(d => d.TranType == "INC").ToList();
             var deductions = allData.Where(d => d.TranType == "DED").ToList();
 
+            if (!incomes.Any() && !deductions.Any())
+                return;
+
             int maxRows = Math.Max(incomes.Count, deductions.Count);
+            bool templateProcessed = false;
 
-            // Create rows for each income/deduction pair
-            for (int i = 0; i < maxRows; i++)
+            foreach (var table in body.Descendants<Table>())
             {
-                var newRow = (TableRow)templateRow.CloneNode(true);
+                if (templateProcessed) continue;
 
-                var incName = i < incomes.Count ? incomes[i].IncName ?? string.Empty : string.Empty;
-                var earnedPay = i < incomes.Count ? incomes[i].EarnedPay.ToString("N2") : string.Empty;
-                var dedName = i < deductions.Count ? deductions[i].DedName ?? string.Empty : string.Empty;
-                var dedAmount = i < deductions.Count ? deductions[i].DeductionAmount.ToString("N2") : string.Empty;
+                var templateRow = table.Elements<TableRow>()
+                    .FirstOrDefault(r => r.InnerText.Contains("{AINC_NAME}") || r.InnerText.Contains("{ADED_NAME}"));
 
-                var rowPlaceholders = new Dictionary<string, string>
+                if (templateRow == null) continue;
+
+                for (int i = 0; i < maxRows; i++)
                 {
-                    { "{INC_NAME}", incName },
-                    { "{EARNED_PAY}", earnedPay },
-                    { "{ADED_NAME}", dedName },
-                    { "{ADEDUCTION_AMOUNT}", dedAmount }
-                };
+                    var newRow = (TableRow)templateRow.CloneNode(true);
 
-                ReplacePlaceholdersInRow(newRow, rowPlaceholders);
+                    var placeholders = new Dictionary<string, string>
+                    {
+                        { "{AINC_NAME}", i < incomes.Count ? (incomes[i].IncName ?? string.Empty) : string.Empty },
+                        { "{EARNED_PAY}", i < incomes.Count ? incomes[i].EarnedPay.ToString("N2") : string.Empty },
+                        { "{ADED_NAME}", i < deductions.Count ? (deductions[i].DedName ?? string.Empty) : string.Empty },
+                        { "{ADEDUCTION_AMOUNT}", i < deductions.Count ? deductions[i].DeductionAmount.ToString("N2") : string.Empty }
+                    };
 
-                // Insert before template row
-                table.InsertBefore(newRow, templateRow);
+                    ReplacePlaceholdersInRow(newRow, placeholders);
+                    table.InsertBefore(newRow, templateRow);
+                }
+
+                templateRow.Remove();
+                templateProcessed = true;
             }
-
-            // Remove template row
-            templateRow.Remove();
         }
 
+        // 🔥 CRITICAL FIX: Replace placeholders WITHOUT destroying run structure
         private void ReplacePlaceholdersInRow(TableRow row, Dictionary<string, string> placeholders)
         {
-            foreach (var cell in row.Elements<TableCell>())
+            foreach (var cell in row.Descendants<TableCell>())
             {
-                foreach (var para in cell.Elements<Paragraph>())
+                foreach (var para in cell.Descendants<Paragraph>())
                 {
                     ProcessParagraphForPlaceholders(para, placeholders);
                 }

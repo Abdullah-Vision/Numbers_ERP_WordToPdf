@@ -28,8 +28,16 @@ namespace WordToPDF.Models
         public string Nic { get; set; }
         public string Ntn { get; set; }
         public decimal OtAmount { get; set; }
+        public decimal OT_HRS { get; set; }
+        public decimal G_PAY { get; set; }
+        public decimal EAR_PAY { get; set; }
+        public decimal WORK_DAYS { get; set; }
+        public decimal LOAN { get; set; }
+        public decimal BIKE_LOAN { get; set; }
+        public decimal TOTAL_DED { get; set; }
         public decimal Incentive { get; set; }
         public decimal EarnedPay { get; set; }
+        public string CURR_DATE { get; set; }
         public decimal DeductionAmount { get; set; }
         public decimal NetSalary { get; set; }
         public decimal NetPayable { get; set; }
