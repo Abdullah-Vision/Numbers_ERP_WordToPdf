@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using System.IO;
 using System.Threading.Tasks;
 using WordToPDF.Services;
@@ -18,11 +18,11 @@ namespace WordToPDF.Controllers
     public class PDFConverterController : ControllerBase
     {
         private readonly IPDFService _pdfService;
-        private readonly ApplicationDbContext _dbContext;
+        private readonly EmployeeDbContext _dbContext;
         private readonly ITemplateService _templateService;
         private readonly IServiceProvider _serviceProvider;
 
-        public PDFConverterController(IPDFService pdfService, ITemplateService templateService, ApplicationDbContext dbContext, IServiceProvider serviceProvider)
+        public PDFConverterController(IPDFService pdfService, ITemplateService templateService, EmployeeDbContext dbContext, IServiceProvider serviceProvider)
         {
             _pdfService = pdfService;
             _dbContext = dbContext;
@@ -71,7 +71,7 @@ namespace WordToPDF.Controllers
                     try
                     {
                         using var scope = _serviceProvider.CreateScope();
-                        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                        var dbContext = scope.ServiceProvider.GetRequiredService<EmployeeDbContext>();
                         var pdfService = scope.ServiceProvider.GetRequiredService<IPDFService>();
 
                         using var templateStream = new MemoryStream(templateBytes, writable: false);
@@ -87,7 +87,7 @@ namespace WordToPDF.Controllers
 
                 await Task.WhenAll(tasks);
 
-                // 5) SINGLE LibreOffice run to convert ALL docx → pdf
+                // 5) SINGLE LibreOffice run to convert ALL docx ? pdf
                 // Use cmd.exe for wildcard expansion (*.docx)
                 string sofficePath = PDFService.ResolveSofficePath(); // central place; throws if missing
 
@@ -142,7 +142,7 @@ namespace WordToPDF.Controllers
                     }
                     else
                     {
-                        // Single PDF → zip
+                        // Single PDF ? zip
                         string singlePdf = Path.Combine(pdfDir, $"Emp_{applicationId.Value}.pdf");
                         if (!System.IO.File.Exists(singlePdf))
                             return StatusCode(500, "PDF was not generated for the requested application.");
@@ -242,7 +242,7 @@ namespace WordToPDF.Controllers
                     try
                     {
                         using var scope = _serviceProvider.CreateScope();
-                        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                        var dbContext = scope.ServiceProvider.GetRequiredService<EmployeeDbContext>();
                         var pdfService = scope.ServiceProvider.GetRequiredService<IPDFService>();
 
                         using var templateStream = new MemoryStream(templateBytes, writable: false);
@@ -258,7 +258,7 @@ namespace WordToPDF.Controllers
 
                 await Task.WhenAll(tasks);
 
-                // 5) Convert all DOCX → PDF using LibreOffice batch
+                // 5) Convert all DOCX ? PDF using LibreOffice batch
                 string sofficePath = PDFService.ResolveSofficePath();
                 var psi = new System.Diagnostics.ProcessStartInfo
                 {

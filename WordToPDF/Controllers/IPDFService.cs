@@ -17,9 +17,10 @@ namespace WordToPDF.Services
 {
     public class PDFService : IPDFService
     {
-        private readonly ApplicationDbContext _dbContext;
+        // SQL Server context (EmployeeDB) - Employee/Education/WordTemplate flow
+        private readonly EmployeeDbContext _dbContext;
 
-        public PDFService(ApplicationDbContext dbContext)
+        public PDFService(EmployeeDbContext dbContext)
         {
             _dbContext = dbContext;
         }
@@ -87,7 +88,7 @@ namespace WordToPDF.Services
                 var placeholders = new Dictionary<string, string>
                 {
                     { "{FullName}", data.FullName ?? string.Empty },
-                    { "{DateOfBirth}", data.DateOfBirth?.ToString("yyyy-MM-dd") ?? string.Empty },
+                    { "{DateOfBirth}", data.DateOfBirth?.ToString("dd MMMM yyyy") ?? string.Empty },
                     { "{Gender}", data.Gender ?? string.Empty },
                     { "{Address}", data.Address ?? string.Empty },
                     { "{City}", data.City ?? string.Empty },

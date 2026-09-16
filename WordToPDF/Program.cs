@@ -24,10 +24,14 @@ builder.Services.AddCors(options =>
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseOracle(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// SQL Server context for the Employee/Education/WordTemplate (PDF converter) flow
+builder.Services.AddDbContext<EmployeeDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("SqlServerConnection")));
+
 
 builder.Services.AddScoped<IPDFService, PDFService>();
 builder.Services.AddScoped<IAppointmentLetterService, AppointmentLetterService>();
-builder.Services.AddScoped<ITemplateService, TemplateService>();
+builder.Services.AddScoped<ITemplateService, SqlTemplateService>();
 builder.Services.AddScoped<IPaySlipService, PaySlipService>();
 builder.Services.AddScoped<IWaterBillService, WaterBillService>();
 
