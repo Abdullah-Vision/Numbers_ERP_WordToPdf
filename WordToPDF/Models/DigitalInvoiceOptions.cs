@@ -11,5 +11,7 @@ namespace WordToPDF.Models
         public string SqlServerConnectionStringName { get; set; } = "SqlServerConnection";
 
         public string OracleConnectionStringName { get; set; } = "DefaultConnection";
+
+        public string TemplateStoragePath { get; set; } = "WordTemplates";
     }
 }

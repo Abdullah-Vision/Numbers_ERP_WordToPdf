@@ -66,7 +66,7 @@ namespace WordToPDF.Controllers
                 using var ms = new MemoryStream();
                 await file.CopyToAsync(ms);
                 var stored = await _templateStore.SaveAsync(templateName.Trim(), ms.ToArray(), overwrite);
-                return Ok(new { stored.Id, stored.TemplateName });
+                return Ok(new { stored.Id, stored.TemplateName, stored.FilePath });
             }
             catch (InvalidOperationException ex)
             {
