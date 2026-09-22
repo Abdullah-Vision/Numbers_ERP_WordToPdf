@@ -15,9 +15,12 @@ added to the procedure, no code change is required — the engine discovers colu
    (`{InvoiceNo}`, `{CustomerName}`, `{Qty}`, ...).
 2. The engine fetches the procedure's result columns **at runtime** (ADO.NET
    `GetColumnSchema()`); no DTOs, no manual mapping, no rebuild when the proc changes.
-3. Line-item table rows in Word are **auto-detected**: any table row containing
-   `{Placeholder}` tokens is cloned and **appended once per data row** (N items = N rows);
-   the template row is removed afterwards.
+3. Line-item table rows in Word are **auto-detected**: the engine computes which aliases
+   have values that **vary across the result set** (detail columns, e.g. Qty, Rate); any
+   table row containing at least one detail-column token is cloned and **appended once per
+   data row** (N items = N rows); the template row is removed afterwards. Rows containing
+   only invariant master aliases (e.g. `{CompanyName}`, `{GrandTotal}`) are filled once
+   from the first row, so supplier/buyer/totals tables are never repeated.
 4. Placeholders outside repeated rows take the **first row's** values (master fields).
 5. Optional format specifier in the placeholder: `{InvoiceDate:dd-MMM-yy}`, `{Qty:N2}`.
    No format → smart defaults (dates `dd-MMM-yy`, decimals with thousand separators).
@@ -77,8 +80,9 @@ IInvoiceDbExecutor
    a. Find all table rows whose text contains at least one `{...}` token → repeated rows.
    b. For each repeated row: clone per data row, fill row-level placeholders
       (row values), insert clones before template row; remove template row.
-   c. Replace all remaining `{...}` tokens in body/headers/footers with first-row values
-      (run-merging replacement so tokens split across runs still match).
+   c. Replace remaining `{...}` tokens in body/headers/footers whose aliases exist with
+      first-row values (run-merging replacement so tokens split across runs still match);
+      unknown aliases stay untouched and are collected for the warnings header.
 5. Save DOCX to temp → LibreOffice `--headless --convert-to pdf` → read PDF bytes.
 6. Return `File(pdfBytes, "application/pdf", $"Invoice_{invoiceId}.pdf")`; cleanup temp dir.
 
@@ -90,8 +94,12 @@ IInvoiceDbExecutor
 - Alias matching is case-insensitive (`invoiceno` ≡ `InvoiceNo`).
 - A placeholder whose alias does not exist in the result set is left **untouched** and its
   name is included in the response's `X-Unresolved-Placeholders` header (comma-separated).
-- Repeated-row detection only applies to rows containing tokens whose aliases **exist** in
-  the result set; rows with only unknown tokens are not treated as data rows.
+- Repeated-row detection: a column is a **detail column** when at least two rows exist and
+  its values differ across rows (case/format-insensitive string comparison); a table row is
+  a **detail row** when it contains a token for a detail column. Single-row result sets
+  produce no detail columns, so the items row is filled once. Totals rows must therefore
+  use master-level aliases (e.g. `{GrandTotal}`); add SUM aliases to the procedure if line
+  aggregates are needed — demonstrating the zero-code-change workflow.
 
 ## Error Handling
 

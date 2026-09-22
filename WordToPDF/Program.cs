@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using WordToPDF.Data;
+using WordToPDF.Models;
 using WordToPDF.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -34,6 +35,10 @@ builder.Services.AddScoped<IAppointmentLetterService, AppointmentLetterService>(
 builder.Services.AddScoped<ITemplateService, SqlTemplateService>();
 builder.Services.AddScoped<IPaySlipService, PaySlipService>();
 builder.Services.AddScoped<IWaterBillService, WaterBillService>();
+builder.Services.Configure<DigitalInvoiceOptions>(
+    builder.Configuration.GetSection(DigitalInvoiceOptions.SectionName));
+builder.Services.AddScoped<IDigitalInvoiceService, DigitalInvoiceService>();
+builder.Services.AddScoped<ErpTemplateStore>();
 
 var app = builder.Build();
 
