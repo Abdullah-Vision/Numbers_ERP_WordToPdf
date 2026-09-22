@@ -101,8 +101,7 @@ namespace WordToPDF.Services
                 safeName = "template";
             }
 
-            var fileName = $"{Guid.NewGuid():N}_{safeName}.docx";
-            var fullPath = Path.Combine(storagePath, fileName);
+            var fullPath = Path.Combine(storagePath, $"{safeName}.docx");
 
             File.WriteAllBytes(fullPath, fileBytes);
             return fullPath;
